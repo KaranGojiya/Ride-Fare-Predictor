@@ -36,6 +36,23 @@ st.write(
 st.divider()
 
 
+
+# ==============================
+# Sidebar
+# ==============================
+st.sidebar.title("About Project")
+st.sidebar.write(
+    "This machine learning app predicts ride fares using a trained "
+    "XGBoost regression model."
+)
+
+st.sidebar.markdown("### Final Model")
+st.sidebar.write("XGBoost Regressor")
+
+st.sidebar.markdown("### Target")
+st.sidebar.write("Final_Fare")
+
+
 # ==============================
 # Input Section
 # ==============================
