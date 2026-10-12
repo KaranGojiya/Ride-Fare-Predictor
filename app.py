@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import joblib
-from datetime import date
 
 
 # ==============================
@@ -19,127 +18,105 @@ st.set_page_config(
 # ==============================
 @st.cache_resource
 def load_model():
-    model = joblib.load("ride_fare_xgboost_model.pkl")
-    return model
+    return joblib.load("ride_fare_xgboost_model.pkl")
 
 
 model = load_model()
 
 
 # ==============================
-# App Header
+# Header
 # ==============================
 st.title("Smart Ride Fare Predictor")
 st.write(
-    "Predict the final ride fare using ride details, demand conditions, "
-    "driver availability, traffic, trust scores, and risk factors."
+    "Predict the final ride fare using city, ride details, demand conditions, "
+    "surge, traffic delay, and ride priority."
 )
 
 st.divider()
 
 
 # ==============================
-# Sidebar
+# Input Section
 # ==============================
-st.sidebar.title("About Project")
-st.sidebar.write(
-    "This machine learning app predicts ride fares using a trained "
-    "XGBoost regression model."
-)
-
-st.sidebar.markdown("### Final Model")
-st.sidebar.write("XGBoost Regressor")
-
-st.sidebar.markdown("### Target")
-st.sidebar.write("Final_Fare")
-
-
-# ==============================
-# User Inputs
-# ==============================
-
-st.subheader("Enter Ride Information")
+st.subheader("Enter Ride Details")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
     city = st.selectbox(
         "City",
-        ["Delhi", "Mumbai", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad"]
+        ["Bangalore", "Chennai", "Delhi", "Hyderabad", "Mumbai"]
     )
-
-    ride_date = st.date_input("Date", value=date.today())
 
     day_of_week = st.selectbox(
         "Day of Week",
-        ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    )
-
-    latitude = st.number_input(
-        "Latitude",
-        min_value=-90.0,
-        max_value=90.0,
-        value=28.61,
-        step=0.01
-    )
-
-    longitude = st.number_input(
-        "Longitude",
-        min_value=-180.0,
-        max_value=180.0,
-        value=77.20,
-        step=0.01
+        options=[0, 1, 2, 3, 4, 5, 6],
+        format_func=lambda x: {
+            0: "Monday",
+            1: "Tuesday",
+            2: "Wednesday",
+            3: "Thursday",
+            4: "Friday",
+            5: "Saturday",
+            6: "Sunday"
+        }[x]
     )
 
     ride_distance = st.number_input(
         "Ride Distance KM",
-        min_value=0.1,
-        max_value=100.0,
-        value=10.0,
-        step=0.5
+        min_value=0.50,
+        max_value=19.99,
+        value=8.50,
+        step=0.10
     )
 
     ride_type = st.selectbox(
         "Ride Type",
-        ["Mini", "Sedan", "SUV", "Bike", "Auto", "Premium"]
+        ["Economy", "Luxury", "Premium"]
     )
 
     weather = st.selectbox(
         "Weather",
-        ["Clear", "Cloudy", "Rainy", "Stormy", "Foggy", "Hot"]
+        ["Clear", "Cloudy", "Rainy", "Stormy"]
     )
 
     event = st.selectbox(
         "Event",
-        ["No Event", "Concert", "Sports", "Festival", "Conference", "Public Holiday"]
-    )
-
-    payment_type = st.selectbox(
-        "Payment Type",
-        ["Cash", "Card", "UPI", "Wallet"]
+        ["Concert", "Festival", "IPL Match", "Political Rally"]
     )
 
 
 with col2:
-    available_drivers = st.number_input(
-        "Available Drivers",
-        min_value=0,
-        max_value=1000,
-        value=120,
-        step=1
+    payment_type = st.selectbox(
+        "Payment Type",
+        ["Card", "Cash", "UPI"]
     )
 
-    demand_level = st.selectbox(
+    available_drivers = st.number_input(
+        "Available Drivers",
+        min_value=0.200075,
+        max_value=0.999884,
+        value=0.650000,
+        step=0.01,
+        format="%.6f"
+    )
+
+    demand_level = st.number_input(
         "Demand Level",
-        ["Low", "Medium", "High", "Very High"]
+        min_value=0.400019,
+        max_value=0.999996,
+        value=0.700000,
+        step=0.01,
+        format="%.6f"
     )
 
     surge_multiplier = st.number_input(
         "Surge Multiplier",
-        min_value=1.0,
-        max_value=5.0,
-        value=1.2,
-        step=0.1
+        min_value=1.00,
+        max_value=2.20,
+        value=1.20,
+        step=0.01
     )
 
     hour_of_day = st.slider(
@@ -155,117 +132,46 @@ with col2:
         format_func=lambda x: "Yes" if x == 1 else "No"
     )
 
-    driver_performance_score = st.number_input(
-        "Driver Performance Score",
-        min_value=0.0,
-        max_value=10.0,
-        value=8.0,
-        step=0.1
-    )
-
-    driver_xp = st.number_input(
-        "Driver XP",
-        min_value=0,
-        max_value=30,
-        value=5,
-        step=1
-    )
-
-    ride_priority = st.selectbox(
-        "Ride Priority",
-        ["Low", "Normal", "High", "Urgent"]
-    )
-
-    fare_acceptance = st.number_input(
-        "Fare Acceptance",
-        min_value=0.0,
-        max_value=1.0,
-        value=0.75,
-        step=0.01
-    )
-
-    cancellation_rate = st.number_input(
-        "Cancellation Rate",
-        min_value=0.0,
-        max_value=1.0,
-        value=0.10,
-        step=0.01
-    )
-
 
 with col3:
     time_of_day = st.selectbox(
         "Time of Day",
-        ["Morning", "Afternoon", "Evening", "Night"]
+        ["Afternoon", "Evening Peak", "Morning Peak", "Night"]
     )
 
-    demand_score = st.number_input(
+    demand_score = st.selectbox(
         "Demand Score",
-        min_value=0.0,
-        max_value=100.0,
-        value=65.0,
-        step=1.0
+        [50, 65, 70, 80, 85, 95, 100]
     )
 
     driver_availability = st.number_input(
         "Driver Availability",
-        min_value=0.0,
-        max_value=100.0,
-        value=70.0,
-        step=1.0
-    )
-
-    traffic_delay = st.number_input(
-        "Traffic Delay",
-        min_value=0.0,
-        max_value=120.0,
-        value=12.0,
-        step=1.0
-    )
-
-    cancellation_probability = st.number_input(
-        "Cancellation Probability",
-        min_value=0.0,
-        max_value=1.0,
-        value=0.15,
-        step=0.01
-    )
-
-    driver_trust_score = st.number_input(
-        "Driver Trust Score",
-        min_value=0.0,
-        max_value=10.0,
-        value=8.5,
-        step=0.1
-    )
-
-    rider_trust_score = st.number_input(
-        "Rider Trust Score",
-        min_value=0.0,
-        max_value=10.0,
-        value=8.0,
-        step=0.1
-    )
-
-    leaderboard_rank = st.number_input(
-        "Leaderboard Rank",
-        min_value=1,
-        max_value=10000,
-        value=250,
+        min_value=30,
+        max_value=100,
+        value=70,
         step=1
     )
 
+    traffic_delay = st.selectbox(
+        "Traffic Delay",
+        [0, 10, 15, 25]
+    )
+
+    ride_priority = st.number_input(
+        "Ride Priority",
+        min_value=83.05,
+        max_value=99.99,
+        value=90.00,
+        step=0.10
+    )
+
 
 # ==============================
-# Create Input DataFrame
+# Input DataFrame
 # ==============================
-
 input_data = pd.DataFrame({
     "City": [city],
-    "Date": [str(ride_date)],
     "Day_of_Week": [day_of_week],
-    "Latitude": [latitude],
-    "Longitude": [longitude],
     "Ride_Distance_KM": [ride_distance],
     "Ride_Type": [ride_type],
     "Weather": [weather],
@@ -276,28 +182,18 @@ input_data = pd.DataFrame({
     "Surge_Multiplier": [surge_multiplier],
     "Hour_of_Day": [hour_of_day],
     "Is_Weekend": [is_weekend],
-    "Driver_Performance_Score": [driver_performance_score],
-    "Driver_XP": [driver_xp],
-    "Ride_Priority": [ride_priority],
-    "Fare_Acceptance": [fare_acceptance],
-    "Cancellation_Rate": [cancellation_rate],
     "Time_of_Day": [time_of_day],
     "Demand_Score": [demand_score],
     "Driver_Availability": [driver_availability],
     "Traffic_Delay": [traffic_delay],
-    "Cancellation_Probability": [cancellation_probability],
-    "Driver_Trust_Score": [driver_trust_score],
-    "Rider_Trust_Score": [rider_trust_score],
-    "Leaderboard_Rank": [leaderboard_rank]
+    "Ride_Priority": [ride_priority]
 })
 
 
 # ==============================
-# Prediction Section
+# Prediction
 # ==============================
-
 st.divider()
-
 st.subheader("Prediction")
 
 if st.button("Predict Final Fare", use_container_width=True):
@@ -306,62 +202,60 @@ if st.button("Predict Final Fare", use_container_width=True):
 
         st.success(f"Predicted Final Fare: ₹{prediction:,.2f}")
 
+        c1, c2, c3, c4 = st.columns(4)
+
+        with c1:
+            st.metric("Distance", f"{ride_distance:.2f} km")
+
+        with c2:
+            st.metric("Surge", f"{surge_multiplier:.2f}x")
+
+        with c3:
+            st.metric("Traffic Delay", f"{traffic_delay} min")
+
+        with c4:
+            st.metric("Fare per KM", f"₹{prediction / ride_distance:,.2f}")
+
         st.markdown("### Ride Summary")
-
-        s1, s2, s3, s4 = st.columns(4)
-
-        with s1:
-            st.metric("Distance", f"{ride_distance:.1f} km")
-
-        with s2:
-            st.metric("Surge", f"{surge_multiplier:.1f}x")
-
-        with s3:
-            st.metric("Demand", demand_level)
-
-        with s4:
-            fare_per_km = prediction / ride_distance
-            st.metric("Fare per KM", f"₹{fare_per_km:,.2f}")
-
-        st.markdown("### Input Preview")
         st.dataframe(input_data, use_container_width=True)
 
-        st.markdown("### Fare Insight")
+        st.markdown("### Fare Insights")
 
         insights = []
 
+        if ride_type in ["Premium", "Luxury"]:
+            insights.append("Selected ride type has a higher pricing category.")
+
         if surge_multiplier >= 1.5:
-            insights.append("Surge multiplier is high, so fare may increase.")
+            insights.append("Surge multiplier is high, so fare is likely to increase.")
 
-        if demand_level in ["High", "Very High"]:
-            insights.append("Demand level is high, which can increase fare.")
+        if demand_score >= 85:
+            insights.append("Demand score is high, which can increase the fare.")
 
-        if traffic_delay >= 20:
-            insights.append("Traffic delay is significant and may affect pricing.")
+        if driver_availability <= 45:
+            insights.append("Driver availability is low, which may increase pricing pressure.")
 
-        if available_drivers < 50:
-            insights.append("Low driver availability can increase fare.")
+        if traffic_delay >= 15:
+            insights.append("Traffic delay is significant and may increase fare.")
 
         if is_weekend == 1:
-            insights.append("Weekend rides may show different pricing patterns.")
+            insights.append("Weekend ride patterns may influence fare.")
 
-        if len(insights) == 0:
+        if not insights:
             insights.append("Ride conditions look normal based on selected inputs.")
 
-        for item in insights:
-            st.write("-", item)
+        for insight in insights:
+            st.write("-", insight)
 
     except Exception as e:
-        st.error("Prediction failed. Please check that input columns match the trained model.")
+        st.error("Prediction failed. Please check that the app columns match the model training columns.")
         st.exception(e)
 
 
 # ==============================
-# Model Performance Section
+# Model Performance
 # ==============================
-
 st.divider()
-
 st.subheader("Model Performance")
 
 performance_data = pd.DataFrame({
@@ -394,16 +288,16 @@ performance_data = pd.DataFrame({
 
 st.dataframe(performance_data, use_container_width=True)
 
-best_model_col1, best_model_col2, best_model_col3 = st.columns(3)
+m1, m2, m3 = st.columns(3)
 
-with best_model_col1:
-    st.metric("Best Model", "XGBoost")
+with m1:
+    st.metric("Selected Model", "XGBoost Regressor")
 
-with best_model_col2:
-    st.metric("Best MAE", "2.34")
+with m2:
+    st.metric("MAE", "2.35")
 
-with best_model_col3:
-    st.metric("Best R² Score", "0.9983")
+with m3:
+    st.metric("R² Score", "0.9983")
 
 st.write(
     "XGBoost Regressor was selected as the final model because it achieved "
@@ -414,7 +308,6 @@ st.write(
 # ==============================
 # Footer
 # ==============================
-
 st.divider()
 st.markdown(
     "Developed by **Karan Gojiya** | "
